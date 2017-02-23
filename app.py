@@ -41,5 +41,5 @@ for r in range(R):
     Rn = int(line[2]) # the number of requests
     requests.append((Rv, Re, Rn))
 
-print endpoints
-print requests
+print(endpoints)
+print(requests)
