@@ -38,8 +38,48 @@ def read_file(file_name):
         Re = int(line[1]) # ID of the endpoint from which the requests are coming from  x
         Rn = int(line[2]) # the number of requests
         requests.append((Rv, Re, Rn))
-    
+
+
     return (endpoints, requests, Sn, C, X)
+
+
+def weight_solution(endpoints, requests, videos, cache_servers, capacity_cache):
+
+    Weighted = []
+
+    for i,s in enumerate(videos):
+        totas = list(filter(lambda x: x[0] == i, requests))
+        if totas != []:
+            total = [sum(x) for x in zip(*totas)][2]
+            #print(total)
+            entry = (i, s, total)
+            Weighted.append(entry)
+
+    videos =  sorted(Weighted, key=lambda ent: ent[2], reverse=True)
+    allocations = []
+
+    #print(videos)
+
+    video_i = 1
+
+    for c in range(cache_servers):
+        if video_i >= len(videos):
+            break # no more videos
+
+        added_to_cache = videos[0][1]
+        entry = ((c, [videos[0][0]]))
+        while (added_to_cache + videos[video_i][1]) < capacity_cache and video_i < len(videos):
+            video = videos[video_i][1]
+            if video > capacity_cache: # doesnt fit anywere, skip video
+                video_i += 1
+                continue
+
+            added_to_cache += videos[video_i][1]
+            entry[1].append(videos[video_i][0])
+            video_i += 1
+        allocations.append(entry)
+
+    return allocations
 
 def bad_solution(endpoints, requests, videos, cache_servers, capacity_cache):
     allocations = []
@@ -52,14 +92,14 @@ def bad_solution(endpoints, requests, videos, cache_servers, capacity_cache):
 
         added_to_cache = 0
         entry = ((c, []))
-        while (added_to_cache + videos[video_i]) < capacity_cache and video_i < len(videos):
+        while (added_to_cache + videos[video_i][1]) < capacity_cache and video_i < len(videos):
             video = videos[video_i]
             if video > capacity_cache: # doesnt fit anywere, skip video
                 video_i += 1
                 continue
 
             added_to_cache += video
-            entry[1].append(video_i)
+            entry[1].append(videos[video_i])
             video_i += 1
         allocations.append(entry)
 
@@ -84,5 +124,5 @@ files = ['me_at_the_zoo', 'kittens', 'trending_today', 'videos_worth_spreading']
 
 for f in files:
     (endpoints, requests, videos, cache_servers, capacity_cache) = read_file(f)
-    allocations = bad_solution(endpoints, requests, videos, cache_servers, capacity_cache)
+    allocations = weight_solution(endpoints, requests, videos, cache_servers, capacity_cache)
     print_solution(f, allocations)
